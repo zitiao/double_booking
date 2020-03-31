@@ -1,0 +1,11 @@
+* {
+  box-sizing: border-box;
+}
+
+.ant-menu-item-selected a {
+  color: white;
+}
+
+a {
+  color: rgba(255, 255, 255, 0.65);
+}
