@@ -1,15 +1,17 @@
 import { connect } from 'dva';
-import { Row, Col, Button } from 'antd';
+import { Row, Col, DatePicker } from 'antd';
+import moment from 'moment';
 import BasicBarChart from '../components/charts/BasicBarChart';
 import AcctDocTable from './components/AcctDocTable';
 import CascadingSelector from './components/CascadingSelector';
 
+const { MonthPicker } = DatePicker;
 function Main(props) {
 
-    const { dispatch, acctDocData, summaryAcctDoc, selectedClass } = props;
+    const { dispatch, acctDocData, summaryAcctDoc, selectedClass, selectedMonth } = props;
 
     const filterData = summaryAcctDoc.filter(a => {
-        if (!selectedClass[0]) return true
+        if (!selectedClass[0] && a.account_layer1 !== '外部账户') return true
         else {
             if (!selectedClass[1]) {
                 return a.account_layer1 === selectedClass[0];
@@ -41,14 +43,13 @@ function Main(props) {
     const getCurrentLayer = (a) => {
         if (!selectedClass[0]) return 'account_layer1';
         else if (!selectedClass[1]) return 'account_layer2';
-        else if (!selectedClass[2] && a[0] && a[0][selectedClass[3]]) return 'account_layer3';
+        else if (!selectedClass[2] && a[0].account_layer3 !== '') return 'account_layer3';
         else return 'account_txt';
     }
 
     const sumData = (a) => {
         let resultObj = {};
         const c = getCurrentLayer(a);
-        console.log(c)
         a.forEach((v, i, a) => {
             const layerString = v[c];
             if (resultObj.hasOwnProperty(layerString)) {
@@ -77,8 +78,17 @@ function Main(props) {
     )
 
 
+    var onChange = (date, dateString) => {
+        dispatch({
+            type: 'kanban/setMonth',
+            payload: dateString
+        });
+    }
+
     return (
         <div>
+            {/* {JSON.stringify(summaryAcctDoc)} */}
+            <MonthPicker onChange={onChange} placeholder="选择月份" value={moment(selectedMonth)} />
             <CascadingSelector />
             <Row>
                 <Col span={24}>
@@ -87,22 +97,6 @@ function Main(props) {
             </Row>
             {total}
             <AcctDocTable data={filterTableData} />
-            {
-                `select 
-                    h.title,
-                    h.document_date,
-                    i.amouunt,
-                    i.dr_cr_flag,
-                    a.account_txt,
-                    l.account_layer1,
-                    l.account_layer2,
-                    l.account_layer3
-                from accounting_document_h h
-                INNER JOIN accounting_document_i i ON h.accounting_document_id= i.accounting_document_id
-                INNER JOIN account_layer l ON i.account_id= l.account_id
-                INNER JOIN account a on a.account_id= i.account_id
-                order by h.create_datetime desc, h.title, i.dr_cr_flag desc`
-            }
         </div>
     );
 }

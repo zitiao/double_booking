@@ -1,4 +1,5 @@
 import axios from 'axios';
+import moment from 'moment';
 
 export default {
     namespace: 'kanban',
@@ -6,6 +7,7 @@ export default {
         acctDocData: [],
         summaryAcctDoc: [],
         selectedClass: [],
+        selectedMonth: ''
     },
     reducers: {
         setAcctDocData(state, { payload: acctDocData }) {
@@ -19,13 +21,18 @@ export default {
             array[index] = value;
             return { ...state, selectedClass: array };
         },
+        setMonth(state, { payload: month }) {
+            let newMonth = month ? month : moment().format('YYYY-MM');
+            return { ...state, selectedMonth: newMonth };
+        },
     },
     effects: {
-        * getAcctDoc(action, { put }) {
-            const result = yield axios.post(`app/acctDoc/getAcctDoc`);
+        * getAcctDoc(action, { put, select }) {
+            const { selectedMonth } = yield select(state => state.kanban);
+            const result = yield axios.post(`app/acctDoc/getAcctDoc`, { month: selectedMonth });
             yield put({ type: 'setAcctDocData', payload: result.data });
         },
-        * getSummaryAcct(action, { put }) {
+        * getSummaryAcct(action, { put, select }) {
             const result = yield axios.post(`app/acctDoc/getSummary`);
             yield put({ type: 'setSummaryAcctDoc', payload: result.data });
         },
@@ -34,6 +41,7 @@ export default {
         initial({ dispatch, history }) {
             history.listen((location) => {
                 if (location.pathname === "/kanban") {
+                    dispatch({ type: 'setMonth' });
                     dispatch({ type: 'getAcctDoc' });
                     dispatch({ type: 'getSummaryAcct' });
                     dispatch({ type: 'acct/getAcctLayer' });

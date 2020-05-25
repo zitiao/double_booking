@@ -27,9 +27,7 @@ export default {
         //         }
         //     })
         //     // Toast.loading(`获取销售数据`, 0);
-
         // }
-
     },
 }
 
